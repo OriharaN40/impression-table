@@ -55,8 +55,8 @@
 
     .grid {
       display: grid;
-      grid-template-columns: var(--col1) var(--col2) var(--col3);
-      gap: 0;
+      grid-template-columns: 1fr 2fr 2fr;
+      gap: 6px;
     }
 
     .grid.header > div {
@@ -84,20 +84,6 @@
       position: relative;
       overflow: hidden;
       touch-action: none;
-    }
-
-    .header-cell {
-      position: relative;
-    }
-
-    .resizer {
-      position: absolute;
-      right: -6px;
-      top: 0;
-      width: 12px;
-      height: 100%;
-      cursor: col-resize;
-      z-index: 10;
     }
 
     .cell-toolbar {
@@ -145,9 +131,9 @@
   <h2 id="titleDisplay"></h2>
 
   <div class="grid header">
-    <div class="header-cell">角色<div class="resizer"></div></div>
-    <div class="header-cell">初印象<div class="resizer"></div></div>
-    <div class="header-cell">现印象</div>
+    <div>角色</div>
+    <div>初印象</div>
+    <div>现印象</div>
   </div>
 
   <div id="rows"></div>
@@ -158,42 +144,6 @@
   const titleInput = document.getElementById('titleInput')
   const titleDisplay = document.getElementById('titleDisplay')
   titleInput.oninput = () => titleDisplay.innerText = titleInput.value
-
-  // 修改列宽
-  const resizers = document.querySelectorAll('.resizer')
-  let startX = 0
-  let startWidth = 0
-  let currentCol = 0
-
-  resizers.forEach((resizer, index) => {
-    resizer.addEventListener('mousedown', e => {
-      e.preventDefault()
-      currentCol = index + 1
-      startX = e.clientX
-
-      startWidth = parseInt(
-        getComputedStyle(document.documentElement)
-          .getPropertyValue(`--col${currentCol}`)
-      )
-
-      document.addEventListener('mousemove', onMouseMove)
-      document.addEventListener('mouseup', onMouseUp)
-    })
-  })
-
-  function onMouseMove(e) {
-    const dx = e.clientX - startX
-    const newWidth = Math.max(100, startWidth + dx)
-    document.documentElement.style.setProperty(
-      `--col${currentCol}`,
-      newWidth + 'px'
-    )
-  }
-
-  function onMouseUp() {
-    document.removeEventListener('mousemove', onMouseMove)
-    document.removeEventListener('mouseup', onMouseUp)
-  }
   
   // 添加一行
   function addRow() {
