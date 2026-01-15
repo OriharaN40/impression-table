@@ -36,8 +36,14 @@
       min-width: 200px;
     }
 
+    #titleDisplay {
+      text-align: center;
+      margin: 10px 0 20px 0;
+    }
+
     #table {
-      border: 2px solid #fff;
+      border: none;
+      background: #111;
       padding: 10px;
     }
 
@@ -47,8 +53,16 @@
       gap: 6px;
     }
 
+    .grid.header > div {
+      background: #111;
+      color: #fff;
+      text-align: center;
+      font-weight: bold;
+      padding: 6px;
+    }
+
     .header > div {
-      border: 1px solid #fff;
+      border: none;
       text-align: center;
       padding: 6px;
       font-weight: bold;
@@ -59,7 +73,7 @@
     }
 
     .cell {
-      border: 1px solid #fff;
+      background: #fff;
       height: 180px;
       position: relative;
       overflow: hidden;
@@ -91,7 +105,7 @@
       border: none;
       background: transparent;
       padding: 0;
-      color: #fff;
+      color: #000;
       font-size: 16px;
       white-space: pre-wrap;
       z-index: 10;
