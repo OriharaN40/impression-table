@@ -49,7 +49,7 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 1fr 2fr 2fr;
+      grid-template-columns: auto auto auto;
       gap: 6px;
     }
 
@@ -74,7 +74,6 @@
 
     .cell {
       background: #fff;
-      height: 180px;
       position: relative;
       overflow: hidden;
       touch-action: none;
@@ -151,6 +150,34 @@
   const titleInput = document.getElementById('titleInput')
   const titleDisplay = document.getElementById('titleDisplay')
   titleInput.oninput = () => titleDisplay.innerText = titleInput.value
+
+  function resizeCells() {
+    const rows = document.querySelectorAll('.grid.row')
+
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('.cell')
+      if (cells.length !== 3) return
+
+      // 角色格（第一列）
+      const roleCell = cells[0]
+      const roleWidth = roleCell.offsetWidth
+      const roleHeight = roleWidth // 正方形
+      roleCell.style.height = roleHeight + 'px'
+
+      // 初印象 & 现印象（第二、三列）
+      const extraWidth = roleWidth * 1.2
+      const impressionHeight = roleHeight
+
+      cells[1].style.width = extraWidth + 'px'
+      cells[1].style.height = impressionHeight + 'px'
+
+      cells[2].style.width = extraWidth + 'px'
+      cells[2].style.height = impressionHeight + 'px'
+
+      // 更新整个 row 的 grid-template-columns
+      row.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
+    })
+  }
   
   // 添加一行
   function addRow() {
@@ -189,6 +216,7 @@
     }
 
     document.getElementById('rows').appendChild(row)
+    resizeCells()
   }
 
   // 添加图片
