@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>角色印象表生成器</title>
+
+  <!-- interact.js（拖拽 / 缩放，支持触控） -->
+  <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+
+  <!-- html2canvas（导出图片） -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+
+    #toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    input, button {
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+
+    #titleInput {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    #table {
+      border: 2px solid #fff;
+      padding: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr 2fr;
+      gap: 6px;
+    }
+
+    .header > div {
+      border: 1px solid #fff;
+      text-align: center;
+      padding: 6px;
+      font-weight: bold;
+    }
+
+    .row {
+      margin-top: 6px;
+    }
+
+    .cell {
+      border: 1px solid #fff;
+      height: 180px;
+      position: relative;
+      overflow: hidden;
+      touch-action: none;
+    }
+
+    .cell-toolbar {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      z-index: 10;
+      display: flex;
+      gap: 4px;
+    }
+
+    .cell-toolbar input,
+    .cell-toolbar button {
+      font-size: 10px;
+      padding: 2px;
+    }
+
+    .item {
+      position: absolute;
+      cursor: move;
+      touch-action: none;
+    }
+
+    .item.text {
+      min-width: 40px;
+      min-height: 20px;
+      padding: 4px;
+      border: 1px dashed #888;
+      background: rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+
+<body>
+
+<div id="toolbar">
+  <input id="titleInput" placeholder="输入标题" />
+  <button onclick="addRow()">➕ 添加角色</button>
+  <button onclick="exportImage()">💾 导出图片</button>
+</div>
+
+<div id="table">
+  <h2 id="titleDisplay"></h2>
+
+  <div class="grid header">
+    <div>角色</div>
+    <div>初印象</div>
+    <div>现印象</div>
+  </div>
+
+  <div id="rows"></div>
+</div>
+
+<script>
+  // 标题同步
+  const titleInput = document.getElementById('titleInput')
+  const titleDisplay = document.getElementById('titleDisplay')
+  titleInput.oninput = () => titleDisplay.innerText = titleInput.value
+
+  // 添加一行
+  function addRow() {
+    const row = document.createElement('div')
+    row.className = 'grid row'
+
+    for (let i = 0; i < 3; i++) {
+      const cell = document.createElement('div')
+      cell.className = 'cell'
+
+      const toolbar = document.createElement('div')
+      toolbar.className = 'cell-toolbar'
+
+      const file = document.createElement('input')
+      file.type = 'file'
+      file.accept = 'image/*'
+      file.onchange = () => addImage(file)
+
+      const textBtn = document.createElement('button')
+      textBtn.innerText = '+字'
+      textBtn.onclick = () => addText(cell)
+
+      toolbar.appendChild(file)
+      toolbar.appendChild(textBtn)
+      cell.appendChild(toolbar)
+
+      row.appendChild(cell)
+    }
+
+    document.getElementById('rows').appendChild(row)
+  }
+
+  // 添加图片
+  function addImage(input) {
+    const file = input.files[0]
+    if (!file) return
+
+    const img = document.createElement('img')
+    img.src = URL.createObjectURL(file)
+    img.className = 'item'
+    img.style.width = '100px'
+
+    input.closest('.cell').appendChild(img)
+    makeInteractive(img)
+  }
+
+  // 添加文字
+  function addText(cell) {
+    const div = document.createElement('div')
+    div.className = 'item text'
+    div.contentEditable = true
+    div.innerText = '文字'
+
+    const color = document.createElement('input')
+    color.type = 'color'
+    color.onchange = () => div.style.color = color.value
+    div.appendChild(document.createElement('br'))
+    div.appendChild(color)
+
+    cell.appendChild(div)
+    makeInteractive(div)
+  }
+
+  // 拖拽 & 缩放
+  function makeInteractive(el) {
+    el.dataset.x = 0
+    el.dataset.y = 0
+    el.dataset.scale = 1
+
+    interact(el)
+      .draggable({
+        listeners: {
+          move (event) {
+            const x = (parseFloat(el.dataset.x) || 0) + event.dx
+            const y = (parseFloat(el.dataset.y) || 0) + event.dy
+            el.dataset.x = x
+            el.dataset.y = y
+            updateTransform(el)
+          }
+        }
+      })
+      .gesturable({
+        listeners: {
+          move (event) {
+            let scale = parseFloat(el.dataset.scale) || 1
+            scale *= (1 + event.ds)
+            el.dataset.scale = scale
+            updateTransform(el)
+          }
+        }
+      })
+  }
+
+  function updateTransform(el) {
+    el.style.transform =
+      `translate(${el.dataset.x}px, ${el.dataset.y}px) scale(${el.dataset.scale})`
+  }
+
+  // 导出图片
+  function exportImage() {
+    html2canvas(document.getElementById('table'), {
+      backgroundColor: '#111'
+    }).then(canvas => {
+      const a = document.createElement('a')
+      a.download = '角色印象表.png'
+      a.href = canvas.toDataURL()
+      a.click()
+    })
+  }
+
+  // 默认一行
+  addRow()
+</script>
+
+</body>
+</html>
