@@ -47,9 +47,15 @@
       padding: 10px;
     }
 
+    :root {
+      --col1: 1fr;
+      --col2: 2fr;
+      --col3: 2fr;
+    }
+
     .grid {
       display: grid;
-      grid-template-columns: 1fr 2fr 2fr;
+      grid-template-columns: var(--col1) var(--col2) var(--col3);
       gap: 6px;
     }
 
@@ -78,6 +84,19 @@
       position: relative;
       overflow: hidden;
       touch-action: none;
+    }
+
+    .header-cell {
+      position: relative;
+    }
+
+    .resizer {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 6px;
+      height: 100%;
+      cursor: col-resize;
     }
 
     .cell-toolbar {
@@ -125,9 +144,9 @@
   <h2 id="titleDisplay"></h2>
 
   <div class="grid header">
-    <div>角色</div>
-    <div>初印象</div>
-    <div>现印象</div>
+    <div class="header-cell">角色<div class="resizer"></div></div>
+    <div class="header-cell">初印象<div class="resizer"></div></div>
+    <div class="header-cell">现印象</div>
   </div>
 
   <div id="rows"></div>
@@ -138,6 +157,32 @@
   const titleInput = document.getElementById('titleInput')
   const titleDisplay = document.getElementById('titleDisplay')
   titleInput.oninput = () => titleDisplay.innerText = titleInput.value
+
+  // 修改列宽
+  const resizers = document.querySelectorAll('.resizer')
+  let startX, startWidth, colIndex
+
+  resizers.forEach((resizer, index) => {
+    resizer.addEventListener('mousedown', e => {
+      startX = e.clientX
+      colIndex = index + 1
+      startWidth = getComputedStyle(document.documentElement)
+        .getPropertyValue(`--col${colIndex}`)
+      document.addEventListener('mousemove', resize)
+      document.addEventListener('mouseup', stopResize)
+    })
+  })
+
+  function resize(e) {
+    const dx = e.clientX - startX
+    const newWidth = `calc(${startWidth} + ${dx}px)`
+    document.documentElement.style.setProperty(`--col${colIndex}`, newWidth)
+  }
+
+  function stopResize() {
+    document.removeEventListener('mousemove', resize)
+    document.removeEventListener('mouseup', stopResize)
+  }
 
   // 添加一行
   function addRow() {
