@@ -88,11 +88,13 @@
     }
 
     .item.text {
-      min-width: 40px;
-      min-height: 20px;
-      padding: 4px;
-      border: 1px dashed #888;
-      background: rgba(0,0,0,0.5);
+      border: none;
+      background: transparent;
+      padding: 0;
+      color: #fff;
+      font-size: 16px;
+      white-space: pre-wrap;
+      z-index: 10;
     }
   </style>
 </head>
@@ -163,6 +165,7 @@
     img.src = URL.createObjectURL(file)
     img.className = 'item'
     img.style.width = '100px'
+    img.style.zIndex = 1
 
     input.closest('.cell').appendChild(img)
     makeInteractive(img)
@@ -174,15 +177,17 @@
     div.className = 'item text'
     div.contentEditable = true
     div.innerText = '文字'
-
-    const color = document.createElement('input')
-    color.type = 'color'
-    color.onchange = () => div.style.color = color.value
-    div.appendChild(document.createElement('br'))
-    div.appendChild(color)
+    div.style.zIndex = 10
 
     cell.appendChild(div)
     makeInteractive(div)
+
+    // 将颜色选择器放到 cell-toolbar
+    const toolbar = cell.querySelector('.cell-toolbar')
+    const color = document.createElement('input')
+    color.type = 'color'
+    color.onchange = () => div.style.color = color.value
+    toolbar.appendChild(color)
   }
 
   // 拖拽 & 缩放
@@ -213,6 +218,19 @@
           }
         }
       })
+    
+    // === PC 鼠标滚轮缩放 ===
+    el.addEventListener('wheel', (e) => {
+      e.preventDefault()
+
+      let scale = parseFloat(el.dataset.scale) || 1
+      const delta = e.deltaY < 0 ? 1.1 : 0.9
+      scale *= delta
+
+      scale = Math.max(0.2, Math.min(scale, 5))
+      el.dataset.scale = scale
+      updateTransform(el)
+    })
   }
 
   function updateTransform(el) {
@@ -222,6 +240,11 @@
 
   // 导出图片
   function exportImage() {
+    // 1. 隐藏所有 cell 工具栏
+    const toolbars = document.querySelectorAll('.cell-toolbar')
+    toolbars.forEach(t => t.style.display = 'none')
+
+    // 2. 截图
     html2canvas(document.getElementById('table'), {
       backgroundColor: '#111'
     }).then(canvas => {
@@ -229,6 +252,9 @@
       a.download = '角色印象表.png'
       a.href = canvas.toDataURL()
       a.click()
+
+      // 3. 恢复工具栏
+      toolbars.forEach(t => t.style.display = '')
     })
   }
 
