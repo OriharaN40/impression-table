@@ -203,7 +203,7 @@
       const file = document.createElement('input')
       file.type = 'file'
       file.accept = 'image/*'
-      file.onchange = () => addImage(file)
+      file.onchange = () => insertImage(file.files[0], cell)
       toolbar.appendChild(file)
 
       // 创建自定义按钮显示，点击时触发 input
@@ -228,19 +228,45 @@
   }
 
   // 添加图片
-  function addImage(input) {
-    const file = input.files[0]
-    if (!file) return
+  let currentHoverCell = null
+  
+  // 记录鼠标悬停的格子
+  document.addEventListener('mouseenter', (e) => {
+    const cell = e.target.closest('.cell')
+    if (cell) currentHoverCell = cell
+  }, true)
+
+  document.addEventListener('mouseleave', (e) => {
+    const cell = e.target.closest('.cell')
+    if (cell && cell === currentHoverCell) currentHoverCell = null
+  }, true)
+
+  // 通用图片插入函数
+  function insertImage(file, cell) {
+    if (!file || !cell) return
 
     const img = document.createElement('img')
     img.src = URL.createObjectURL(file)
     img.className = 'item'
-    img.style.width = '100px'
+    const cellRect = cell.getBoundingClientRect()
+    img.style.width = Math.min(100, cellRect.width * 0.8) + 'px'
+    img.style.maxHeight = (cellRect.height * 0.8) + 'px'
     img.style.zIndex = 1
 
-    input.closest('.cell').appendChild(img)
+    cell.appendChild(img)
     makeInteractive(img)
   }
+
+  document.addEventListener('paste', (e) => {
+    if (!currentHoverCell) return
+    const items = (e.clipboardData || e.originalEvent.clipboardData).items
+    for (const item of items) {
+      if (item.type.indexOf('image') === 0) {
+        const file = item.getAsFile()
+        insertImage(file, currentHoverCell)
+      }
+    }
+  })
 
   // 添加文字
   function addText(cell) {
