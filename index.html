@@ -183,6 +183,9 @@
 
       // 更新整个 row 的 grid-template-columns
       row.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
+      if (header) {
+        header.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
+      }
     })
   }
   
