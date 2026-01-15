@@ -37,12 +37,8 @@
     }
 
     #titleDisplay {
-      text-align: center;
       margin: 10px 0 20px 0;
-      font-size: 36px;
       font-weight: bold;
-      color: #fff;
-      text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
     }
 
     #table {
@@ -57,15 +53,22 @@
       gap: 6px;
     }
 
-    /* Header 样式，文字居中每列 */
     .grid.header > div {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; 
+      align-items: center;     
+      justify-content: center; 
       font-weight: bold;
       background: #111;
       color: #fff;
       text-align: center;
+      padding: 6px;
+    }
+
+    .header > div {
+      border: none;
+      text-align: center;
+      padding: 6px;
+      font-weight: bold;
     }
 
     .row {
@@ -77,9 +80,9 @@
       position: relative;
       overflow: hidden;
       touch-action: none;
+      height: 360px;
     }
 
-    /* 工具栏右下角，按钮垂直排列 */
     .cell-toolbar {
       position: absolute;
       bottom: 2px;
@@ -87,14 +90,13 @@
       z-index: 10;
       display: flex;
       flex-direction: column;
-      gap: 2px;
+      gap: 4px;
     }
 
     .cell-toolbar input[type="file"] {
-      display: none; /* 隐藏原始 file input */
+      display: none;
     }
-
-    /* 两个按钮统一样式 */
+    
     .cell-toolbar button {
       width: 36px;
       height: 24px;
@@ -148,42 +150,44 @@
 </div>
 
 <script>
+  // 标题同步
   const titleInput = document.getElementById('titleInput')
   const titleDisplay = document.getElementById('titleDisplay')
   titleInput.oninput = () => titleDisplay.innerText = titleInput.value
 
-  // 记录鼠标悬停的格子
-  let hoveredCell = null
-  document.addEventListener('mouseover', e => {
-    const cell = e.target.closest('.cell')
-    hoveredCell = cell
-  })
-  document.addEventListener('mouseout', e => {
-    const cell = e.target.closest('.cell')
-    if (cell === hoveredCell) hoveredCell = null
-  })
+  function resizeCells() {
+    const rows = document.querySelectorAll('.grid.row')
+    const header = document.querySelector('.grid.header')
 
-  // 粘贴剪贴板图片
-  document.addEventListener('paste', (e) => {
-    if (!hoveredCell) return
-    const items = e.clipboardData.items
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i]
-      if (item.type.indexOf('image') !== -1) {
-        const file = item.getAsFile()
-        if (!file) return
-        const img = document.createElement('img')
-        img.src = URL.createObjectURL(file)
-        img.className = 'item'
-        img.style.width = '100px'
-        img.style.zIndex = 1
-        hoveredCell.appendChild(img)
-        makeInteractive(img)
-        break
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('.cell')
+      if (cells.length !== 3) return
+
+      // 角色格，用 height 为基准
+      const roleCell = cells[0]
+      const roleHeight = roleCell.offsetHeight
+      const roleWidth = roleHeight
+      roleCell.style.width = roleWidth + 'px'
+      
+      // 初印象 & 现印象
+      const extraWidth = roleHeight * 1.2
+      const impressionHeight = roleHeight
+      
+      cells[1].style.width = extraWidth + 'px'
+      cells[1].style.height = impressionHeight + 'px'
+
+      cells[2].style.width = extraWidth + 'px'
+      cells[2].style.height = impressionHeight + 'px'
+
+      // 更新整个 row 的 grid-template-columns
+      row.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
+      if (header) {
+        header.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
       }
-    }
-  })
-
+    })
+  }
+  
+  // 添加一行
   function addRow() {
     const row = document.createElement('div')
     row.className = 'grid row'
@@ -195,25 +199,26 @@
       const toolbar = document.createElement('div')
       toolbar.className = 'cell-toolbar'
 
+      // 文件上传隐藏 input
+      const file = document.createElement('input')
+      file.type = 'file'
+      file.accept = 'image/*'
+      file.onchange = () => addImage(file)
+      toolbar.appendChild(file)
+
+      // 创建自定义按钮显示，点击时触发 input
+      const fileBtn = document.createElement('button')
+      fileBtn.className = 'file-btn'
+      fileBtn.innerText = '+图'
+      fileBtn.onclick = () => file.click()
+      toolbar.appendChild(fileBtn)
+
       // +字按钮
       const textBtn = document.createElement('button')
       textBtn.innerText = '+字'
       textBtn.onclick = () => addText(cell)
       toolbar.appendChild(textBtn)
-
-      // 隐藏 file input
-      const fileInput = document.createElement('input')
-      fileInput.type = 'file'
-      fileInput.accept = 'image/*'
-      fileInput.onchange = () => addImage(fileInput)
-      toolbar.appendChild(fileInput)
-
-      // +图按钮
-      const fileBtn = document.createElement('button')
-      fileBtn.innerText = '+图'
-      fileBtn.onclick = () => fileInput.click()
-      toolbar.appendChild(fileBtn)
-
+      
       cell.appendChild(toolbar)
       row.appendChild(cell)
     }
@@ -222,27 +227,33 @@
     resizeCells()
   }
 
+  // 添加图片
   function addImage(input) {
     const file = input.files[0]
     if (!file) return
+
     const img = document.createElement('img')
     img.src = URL.createObjectURL(file)
     img.className = 'item'
     img.style.width = '100px'
     img.style.zIndex = 1
+
     input.closest('.cell').appendChild(img)
     makeInteractive(img)
   }
 
+  // 添加文字
   function addText(cell) {
     const div = document.createElement('div')
     div.className = 'item text'
     div.contentEditable = true
     div.innerText = '文字'
     div.style.zIndex = 10
+
     cell.appendChild(div)
     makeInteractive(div)
 
+    // 将颜色选择器放到 cell-toolbar
     const toolbar = cell.querySelector('.cell-toolbar')
     const color = document.createElement('input')
     color.type = 'color'
@@ -250,6 +261,7 @@
     toolbar.appendChild(color)
   }
 
+  // 拖拽 & 缩放
   function makeInteractive(el) {
     el.dataset.x = 0
     el.dataset.y = 0
@@ -258,7 +270,7 @@
     interact(el)
       .draggable({
         listeners: {
-          move(event) {
+          move (event) {
             const x = (parseFloat(el.dataset.x) || 0) + event.dx
             const y = (parseFloat(el.dataset.y) || 0) + event.dy
             el.dataset.x = x
@@ -269,7 +281,7 @@
       })
       .gesturable({
         listeners: {
-          move(event) {
+          move (event) {
             let scale = parseFloat(el.dataset.scale) || 1
             scale *= (1 + event.ds)
             el.dataset.scale = scale
@@ -277,12 +289,15 @@
           }
         }
       })
-
+    
+    // === PC 鼠标滚轮缩放 ===
     el.addEventListener('wheel', (e) => {
       e.preventDefault()
+
       let scale = parseFloat(el.dataset.scale) || 1
       const delta = e.deltaY < 0 ? 1.1 : 0.9
       scale *= delta
+
       scale = Math.max(0.2, Math.min(scale, 5))
       el.dataset.scale = scale
       updateTransform(el)
@@ -290,13 +305,17 @@
   }
 
   function updateTransform(el) {
-    el.style.transform = `translate(${el.dataset.x}px, ${el.dataset.y}px) scale(${el.dataset.scale})`
+    el.style.transform =
+      `translate(${el.dataset.x}px, ${el.dataset.y}px) scale(${el.dataset.scale})`
   }
 
+  // 导出图片
   function exportImage() {
+    // 1. 隐藏所有 cell 工具栏
     const toolbars = document.querySelectorAll('.cell-toolbar')
     toolbars.forEach(t => t.style.display = 'none')
 
+    // 2. 截图
     html2canvas(document.getElementById('table'), {
       backgroundColor: '#111'
     }).then(canvas => {
@@ -304,39 +323,15 @@
       a.download = '角色印象表.png'
       a.href = canvas.toDataURL()
       a.click()
+
+      // 3. 恢复工具栏
       toolbars.forEach(t => t.style.display = '')
     })
   }
 
-  function resizeCells() {
-    const rows = document.querySelectorAll('.grid.row')
-    const header = document.querySelector('.grid.header')
-    rows.forEach(row => {
-      const cells = row.querySelectorAll('.cell')
-      if (cells.length !== 3) return
-
-      const roleHeight = cells[0].offsetHeight
-      const roleWidth = roleHeight
-
-      cells[0].style.width = roleWidth + 'px'
-      cells[0].style.height = roleHeight + 'px'
-
-      const extraWidth = roleHeight * 1.2
-      cells[1].style.width = extraWidth + 'px'
-      cells[1].style.height = roleHeight + 'px'
-      cells[2].style.width = extraWidth + 'px'
-      cells[2].style.height = roleHeight + 'px'
-
-      row.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
-
-      if (header) {
-        header.style.gridTemplateColumns = `${roleWidth}px ${extraWidth}px ${extraWidth}px`
-      }
-    })
-  }
-
-  // 默认添加一行
+  // 默认一行
   addRow()
+  resizeCells()
 </script>
 
 </body>
